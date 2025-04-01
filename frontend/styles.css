@@ -1,0 +1,23 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+#map {
+    height: 500px;
+    width: 80%;
+    margin: auto;
+    border: 2px solid black;
+}
+
+#confession-box {
+    margin-top: 20px;
+    padding: 10px;
+    font-size: 1.2em;
+    background: #f5f5f5;
+    display: inline-block;
+    border: 1px solid #ccc;
+    max-width: 60%;
+}
