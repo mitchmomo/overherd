@@ -6,20 +6,30 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// Define some locations and their placeholder confessions
+// Define some locations
 var locations = {
-    "Stata Center": { coords: [42.3618784401601, -71.09072610287322], confession: "I once stayed in Stata for 48 hours straight, surviving only on Soylent and coffee." },
-    "Simmons Hall": { coords: [42.35703064313976, -71.10166718351876], confession: "Sometimes I just walk into Simmons because it feels like a giant cheese grater." },
-    "Killian Court": { coords: [42.35915382446763, -71.09156883355729], confession: "I graduated last year and still have nightmares about running naked through Killian." },
-    "Lobby 7": { coords: [42.35951439870911, -71.09314417218918], confession: "I used to believe that the Infinite Corridor actually never ended." }
+    "stata": [42.3628, -71.0913],
+    "simmons": [42.3564, -71.1011],
+    "killian": [42.3588, -71.0921],
+    "lobby7": [42.3592, -71.0935]
 };
 
 // Add markers and click event
 Object.keys(locations).forEach(location => {
-    var place = locations[location];
-    var marker = L.marker(place.coords).addTo(map)
+    var marker = L.marker(locations[location]).addTo(map)
         .bindPopup(location)
-        .on('click', () => {
-            document.getElementById("confession-box").innerText = place.confession;
-        });
+        .on('click', () => fetchConfession(location));
 });
+
+// Fetch confession from backend
+function fetchConfession(location) {
+    fetch(`http://127.0.0.1:5000/confession?location=${encodeURIComponent(location)}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("confession-box").innerText = data.confession;
+        })
+        .catch(error => {
+            console.error("Error fetching confession:", error);
+            document.getElementById("confession-box").innerText = "Error fetching confession.";
+        });
+}
