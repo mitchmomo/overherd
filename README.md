@@ -11,6 +11,7 @@ _current version: few-shot location-based confessions generation_
 3. nav to http://127.0.0.1:5500/frontend/index.html + explore!
 
 ### roadmap
+- hook up to computing cluster 
 - add infinite corridor animation for loading screen
 - topic-based modelling of existing confessions
 - pretrain model on confessions corpus
