@@ -3,18 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overherd: MIT Confessions Map</title>
+    <title>IHTFP</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      #map { height: 420px; margin-bottom: 20px; }
+      #confession-box {
+        background: #fff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        max-width: 700px;
+        margin: auto;
+        font-size: 1.1em;
+      }
+    </style>
 </head>
 <body>
-
-    <h1>Overherd @ MIT</h1>
-    <div id="map"></div>
-    <div id="confession-box">Click a location to hear a confession...</div>
+<h1>ihtfp!</h1>
+<h2>i heard [that] from [place]</h2>
+<div id="map"></div>
+<div id="confession-box" style="margin-bottom: 20px; min-height: 42px;">click a location to overhear a confession...</div>
+<div style="text-align:center;"></div>
+    <button onclick="makeGuess('real')" style="background: #76c799; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 1em; cursor: pointer; margin: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">real 🧍</button>
+    <button onclick="makeGuess('fake')" style="background: #f99494; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 1em; cursor: pointer; margin: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">fake 🤖</button>
+    <p id="result"></p>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
+    <script>
+      const map = L.map('map').setView([42.359, -71.093], 15.4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+      }).addTo(map);
+
+      const locations = {
+        "Stata Center": [42.361677900508745, -71.09062677005224],
+        "Simmons Hall": [42.3570809844781, -71.10151119925918],
+        "Killian Court": [42.35887146633117, -71.09152799223449],
+        "Lobby 7": [42.35930750246464, -71.0931051310534],
+        "Next House": [42.355107554683016, -71.10162768938001],
+        "East Campus": [42.36038761368802, -71.08853231135414],
+        "Banana Lounge": [42.36067493812588, -71.09113360108799],
+        "Z Center": [42.35892447631196, -71.09588882645764],
+        "Stud": [42.359052772881476, -71.09483344230945],
+        "Infinite Corridor": [42.359451, -71.092361],
+        "Hayden Library": [42.35904661158103, -71.08922822676674]
+      };
+
+      let currentLabel = null;
+
+      function fetchConfession(location) {
+        document.getElementById("confession-box").innerText = "Eavesdropping...";
+
+        fetch(`http://127.0.0.1:5000/guess_confession?location=${encodeURIComponent(location)}`)
+          .then(res => {
+            if (!res.ok) throw new Error("Request failed.");
+            return res.json();
+          })
+          .then(data => {
+            document.getElementById("confession-box").innerText = data.confession;
+            currentLabel = data.label;
+            document.getElementById("result").innerText = "";
+          })
+          .catch(err => {
+            console.error(err);
+            document.getElementById("confession-box").innerText = "Error fetching confession.";
+          });
+      }
+
+    for (let loc in locations) {
+      const marker = L.marker(locations[loc]).addTo(map);
+      marker.bindPopup(loc);
+      marker.on('click', () => {
+        fetchConfession(loc);
+        document.getElementById("confession-box").style.textTransform = "lowercase";
+      });
+    }
+
+      function makeGuess(guess) {
+        const isCorrect = guess === currentLabel;
+        const resultText = isCorrect ? "✅ Correct!" : `❌ Nope. That was ${currentLabel.toUpperCase()}.`;
+        document.getElementById("result").innerText = resultText;
+
+        // Prevent layout shift by ensuring the result text container has a fixed height
+        const resultElement = document.getElementById("result");
+        resultElement.style.minHeight = "1.5em"; // Adjust as needed to match the expected height
+        updateProgress(isCorrect);
+      }
+    </script>
+    <div id="progress-container" style="position: relative; width: 100%; max-width: 700px; height: 50px; margin: 20px auto; background: #e0e0e0; border-radius: 25px; overflow: hidden;">
+        <div id="progress-bar" style="width: 20%; height: 100%; background: #9c5a3c63; position: absolute; transition: width 0.5s;"></div>
+        <div id="walker" style="position: absolute; top: 50%; left: 20%; transform: translate(-50%, -50%); width: 250px; height: 250px; background: url('beaver.png') no-repeat center center; background-size: contain; z-index: 20; pointer-events: none;"></div>
+    </div>
+
+    <script>
+        let progress = 20; // Start at 50% progress
+
+        function updateProgress(isCorrect) {
+            if (isCorrect) {
+                progress = Math.min(100, progress + 10); // Move forward
+            } else {
+                progress = Math.max(0, progress - 20); // Move backward
+            }
+
+            const progressBar = document.getElementById("progress-bar");
+            const walker = document.getElementById("walker");
+
+            progressBar.style.width = `${progress}%`;
+            walker.style.left = `${progress}%`;
+        }
+
+        function makeGuess(guess) {
+            const isCorrect = guess === currentLabel;
+            const resultText = isCorrect ? "✅ Correct!" : `❌ Nope. That was ${currentLabel.toUpperCase()}.`;
+            document.getElementById("result").innerText = resultText;
+
+            // Prevent layout shift by ensuring the result text container has a fixed height
+            const resultElement = document.getElementById("result");
+            resultElement.style.minHeight = "1.5em"; // Adjust as needed to match the expected height
+            updateProgress(isCorrect);
+        }
+    </script>
 
 </body>
 </html>
